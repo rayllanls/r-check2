@@ -264,71 +264,47 @@ class HomeScreen(ctk.CTkFrame):
             self._path_entry.delete(0, "end")
             self._path_entry.insert(0, path)
 
-    def _start_scan(self) -> None:
+    def __init__(self, master, app=None, nav_callback=None, **kwargs) -> None:
+        super().__init__(master, fg_color=BG_PRIMARY, **kwargs)
+        self.app = app
+        self._navigate = nav_callback
+        self._plan = "free"
+        self._is_navigating = False
+
+    def _on_scan_click(self) -> None:
+        """Coleta configurações e inicia navegação para o scan."""
+        if hasattr(self, "_is_navigating") and self._is_navigating:
+            return
+        
         if self._mode.get().strip() == "Pasta local":
             target = self._path_entry.get().strip()
         else:
             target = self._url_entry.get().strip()
+            
         if not target:
             from tkinter import messagebox
             messagebox.showwarning("r-check", "Informe um caminho ou URL antes de iniciar.")
             return
+
+        self._is_navigating = True
         self._navigate("progress", target=target, plan=self._plan)
+        # Reset da flag após um pequeno delay para permitir nova navegação se voltar
+        self.after(2000, lambda: setattr(self, "_is_navigating", False))
 
     def _schedule_hide_tooltip(self) -> None:
-        """Agenda o fechamento com delay para evitar piscar ao mover entre widgets filhos."""
-        if hasattr(self, "_tooltip_hide_id") and self._tooltip_hide_id:
-            self.after_cancel(self._tooltip_hide_id)
-        self._tooltip_hide_id = self.after(120, self._hide_tooltip)
+        """Solicita ao app que esconda o tooltip global."""
+        if self.app:
+            self.app.hide_tooltip()
 
     def _show_tooltip(self, event, tool: str, desc: str) -> None:
-        """Cria e exibe o tooltip próximo ao cursor."""
-        # Se houver um fechamento agendado, cancela pois o mouse entrou novamente
-        if hasattr(self, "_tooltip_hide_id") and self._tooltip_hide_id:
-            self.after_cancel(self._tooltip_hide_id)
-            self._tooltip_hide_id = None
-        
-        # Fecha qualquer tooltip existente ANTES de criar um novo
-        self._hide_tooltip()
-
-        tip = ctk.CTkToplevel(self)
-        tip.overrideredirect(True)
-        tip.attributes("-topmost", True)
-        # No Windows, CTkToplevel pode precisar de transparência ou alpha fix se piscar
-        # mas aqui focamos em evitar o leak de múltiplas janelas.
-
-        frame = ctk.CTkFrame(
-            tip, fg_color=BG_CARD, corner_radius=12,
-            border_width=1, border_color=BG_BORDER,
-        )
-        frame.pack(fill="both", expand=True, padx=1, pady=1)
-
-        ctk.CTkLabel(
-            frame, text=tool.capitalize(),
-            font=font_heading(14), text_color=TEXT_PRIMARY,
-        ).pack(anchor="w", padx=14, pady=(12, 4))
-
-        ctk.CTkLabel(
-            frame, text=desc,
-            font=font_body(12), text_color=TEXT_SECONDARY,
-            wraplength=300, justify="left",
-        ).pack(anchor="w", padx=14, pady=(0, 12))
-
-        tip.update_idletasks()
-        x = event.x_root + 15
-        y = event.y_root + 15
-        tip.geometry(f"+{x}+{y}")
-        self._tooltip = tip
+        """Solicita ao app que exiba o tooltip global."""
+        if self.app:
+            self.app.show_tooltip(tool, desc, event.x_root, event.y_root)
 
     def _hide_tooltip(self) -> None:
-        """Destrói a janela de tooltip ativa."""
-        if self._tooltip is not None:
-            try:
-                if self._tooltip.winfo_exists():
-                    self._tooltip.destroy()
-            except Exception:
-                pass
-            self._tooltip = None
+        """Ocultamento imediato via app."""
+        if self.app:
+            self.app.hide_tooltip(delay=0)
 
     def get_target(self) -> str:
         """Retorna o alvo atual. Usado em testes."""

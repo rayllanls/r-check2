@@ -14,18 +14,18 @@ class TrufflehogTool(BaseTool):
     def run(self, project_path: Path) -> list[Finding]:
         binary = self.resolve_binary()
 
-        # No Windows, file://D:\path pode falhar. Usamos formato de URI absoluto.
+        # No Windows, file://D:\path pode falhar. Usamos formato de URI absoluto com 3 barras e forward slashes.
         if (project_path / ".git").is_dir():
             import platform
-            path_uri = str(project_path)
             if platform.system() == "Windows":
-                # file:///D:/path/to/project
-                path_uri = f"file:///{str(project_path).replace('\\', '/')}"
+                # Converte backslashes para forward slashes e garante 3 barras na URI
+                clean_path = str(project_path.absolute()).replace("\\", "/")
+                path_uri = f"file:///{clean_path}"
             else:
-                path_uri = f"file://{project_path}"
+                path_uri = f"file://{project_path.absolute()}"
             cmd = [binary, "git", path_uri, "--json"]
         else:
-            cmd = [binary, "filesystem", str(project_path), "--json"]
+            cmd = [binary, "filesystem", str(project_path.absolute()), "--json"]
 
         result = subprocess.run(
             cmd, capture_output=True, text=True, timeout=300,

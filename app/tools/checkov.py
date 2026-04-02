@@ -30,13 +30,20 @@ class CheckovTool(BaseTool):
     tool_name = "checkov"
 
     def run(self, project_path: Path) -> list[Finding]:
-        import sys
-        # Checkov pip wrapper (.exe) é incompatível no Windows 64-bit.
-        # Invoca sempre via sys.executable -m checkov para garantir compatibilidade.
-        cmd = [sys.executable, "-m", "checkov", "-d", str(project_path), "--output", "json", "--compact"]
+        try:
+            binary = self.resolve_binary()
+        except FileNotFoundError:
+            binary = None
+
+        if binary:
+            # Uso direto do binário (estável no Windows empacotado)
+            cmd = [binary, "-d", str(project_path.absolute()), "--output", "json", "--compact"]
+        else:
+            # Fallback via módulo (pode falhar no frozen app)
+            cmd = [sys.executable, "-m", "checkov", "-d", str(project_path.absolute()), "--output", "json", "--compact"]
 
         result = subprocess.run(
-            cmd, capture_output=True, text=True, timeout=300,
+            cmd, capture_output=True, text=True, timeout=600,
             creationflags=self.get_creationflags()
         )
         # No check=True — Checkov exits non-zero when findings are found

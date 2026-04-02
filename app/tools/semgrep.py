@@ -21,27 +21,42 @@ class SemgrepTool(BaseTool):
 
     def run(self, project_path: Path) -> list[Finding]:
         import sys
-        # Semgrep pip wrapper pode ser incompatível no Windows 64-bit.
-        # Invoca via sys.executable -m semgrep para garantir compatibilidade.
         try:
             binary = self.resolve_binary()
         except FileNotFoundError:
             binary = None
 
-        # Detect languages and select rulesets
-        languages = detect_languages(project_path)
-        rulesets = select_rulesets(languages)
+        rulesets = select_rulesets(project_path)
         if not rulesets:
-            rulesets = ["assets/rules/generic"]
+            # Fallback seguro para regras locais de uso genérico
+            rulesets = [str((Path(__file__).parent.parent.parent / "assets" / "rules" / "generic").absolute())]
 
-        base_cmd = [binary] if binary else [sys.executable, "-m", "semgrep"]
-        cmd = base_cmd + ["--json"]
-        for ruleset in rulesets:
-            cmd.extend(["--config", ruleset])
-        cmd.append(str(project_path))
+        # Garantir que os caminhos das regras sejam absolutos
+        abs_rulesets = []
+        for r in rulesets:
+            if not Path(r).is_absolute():
+                abs_r = (Path(__file__).parent.parent.parent / r).absolute()
+                if abs_r.exists():
+                    abs_rulesets.append(str(abs_r))
+                else:
+                    abs_rulesets.append(r) # fallback
+            else:
+                abs_rulesets.append(r)
+
+        if binary:
+            # Uso direto do binário (estável no Windows empacotado)
+            cmd = [binary, "scan", "--json", "--quiet"]
+        else:
+            # Fallback via módulo (pode falhar no frozen app)
+            cmd = [sys.executable, "-m", "semgrep", "scan", "--json", "--quiet"]
+
+        for r in abs_rulesets:
+            cmd.extend(["--config", r])
+
+        cmd.append(str(project_path.absolute()))
 
         result = subprocess.run(
-            cmd, capture_output=True, text=True, timeout=300,
+            cmd, capture_output=True, text=True, timeout=600,
             creationflags=self.get_creationflags()
         )
         # Semgrep exits 1 when findings exist — do NOT check returncode

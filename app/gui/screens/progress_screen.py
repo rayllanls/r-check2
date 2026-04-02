@@ -31,8 +31,9 @@ from app.config import PLAN_TOOLS, load_github_token
 class ProgressScreen(ctk.CTkFrame):
     """Progress screen: runs scans off main thread, polls queue, shows per-scanner status."""
 
-    def __init__(self, master: ctk.CTkBaseClass, nav_callback: Callable, **kwargs) -> None:
+    def __init__(self, master, app=None, nav_callback=None, **kwargs) -> None:
         super().__init__(master, fg_color=BG_PRIMARY, **kwargs)
+        self.app = app
         self._navigate = nav_callback
         self._q: queue.Queue = queue.Queue()
         self._orchestrator: Optional[ScanOrchestrator] = None

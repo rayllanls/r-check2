@@ -14,16 +14,16 @@ def main() -> None:
         app.show_screen(screen_name, **kwargs)
 
     # Create and register screens
-    home = HomeScreen(app.content_frame, nav_callback=navigate)
+    home = HomeScreen(app.content_frame, app=app, nav_callback=navigate)
     app.register_screen("home", home)
 
-    settings = SettingsScreen(app.content_frame, nav_callback=navigate)
+    settings = SettingsScreen(app.content_frame, app=app, nav_callback=navigate)
     app.register_screen("settings", settings)
 
-    progress = ProgressScreen(app.content_frame, nav_callback=navigate)
+    progress = ProgressScreen(app.content_frame, app=app, nav_callback=navigate)
     app.register_screen("progress", progress)
 
-    results = ResultsScreen(app.content_frame, nav_callback=navigate)
+    results = ResultsScreen(app.content_frame, app=app, nav_callback=navigate)
     app.register_screen("results", results)
 
     app.run()
