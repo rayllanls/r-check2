@@ -1,0 +1,7 @@
+rules:
+- id: hardcoded-secret-generic
+  languages: [generic]
+  severity: ERROR
+  message: "Possible hardcoded secret found in generic file"
+  patterns:
+    - pattern-regex: '(?i)(password|passwd|pwd|secret|api_key|apikey|token|access_key|secret_key|auth_token)\s*[:=]\s*["''][^"'']{4,}["'']'

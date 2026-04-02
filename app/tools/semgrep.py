@@ -41,7 +41,8 @@ class SemgrepTool(BaseTool):
         cmd.append(str(project_path))
 
         result = subprocess.run(
-            cmd, capture_output=True, text=True, timeout=300
+            cmd, capture_output=True, text=True, timeout=300,
+            creationflags=self.get_creationflags()
         )
         # Semgrep exits 1 when findings exist — do NOT check returncode
 

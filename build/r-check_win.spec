@@ -31,6 +31,9 @@ datas += collect_data_files("app.report", includes=["templates/*.html"])
 # CustomTkinter themes e assets
 datas += collect_data_files("customtkinter")
 
+# Assets (regras do semgrep, etc.)
+datas += [(str(ROOT / "assets"), "assets")]
+
 # ── Binários dos scanners (vendors/win/) ─────────────────────────────────────
 binaries = []
 vendor_win = ROOT / "vendors" / "win"

@@ -276,20 +276,26 @@ class HomeScreen(ctk.CTkFrame):
         self._navigate("progress", target=target, plan=self._plan)
 
     def _schedule_hide_tooltip(self) -> None:
-        """Agenda o hide com delay para não fechar ao mover entre widgets filhos."""
-        hide_id = self.after(120, self._hide_tooltip)
-        self._tooltip_hide_id = hide_id
+        """Agenda o fechamento com delay para evitar piscar ao mover entre widgets filhos."""
+        if hasattr(self, "_tooltip_hide_id") and self._tooltip_hide_id:
+            self.after_cancel(self._tooltip_hide_id)
+        self._tooltip_hide_id = self.after(120, self._hide_tooltip)
 
     def _show_tooltip(self, event, tool: str, desc: str) -> None:
-        # Cancela hide agendado (mouse voltou ao chip)
-        hide_id = getattr(self, "_tooltip_hide_id", None)
-        if hide_id:
-            self.after_cancel(hide_id)
+        """Cria e exibe o tooltip próximo ao cursor."""
+        # Se houver um fechamento agendado, cancela pois o mouse entrou novamente
+        if hasattr(self, "_tooltip_hide_id") and self._tooltip_hide_id:
+            self.after_cancel(self._tooltip_hide_id)
             self._tooltip_hide_id = None
+        
+        # Fecha qualquer tooltip existente ANTES de criar um novo
         self._hide_tooltip()
+
         tip = ctk.CTkToplevel(self)
-        tip.overrideredirect(True)  # sem barra de título
+        tip.overrideredirect(True)
         tip.attributes("-topmost", True)
+        # No Windows, CTkToplevel pode precisar de transparência ou alpha fix se piscar
+        # mas aqui focamos em evitar o leak de múltiplas janelas.
 
         frame = ctk.CTkFrame(
             tip, fg_color=BG_CARD, corner_radius=12,
@@ -308,18 +314,21 @@ class HomeScreen(ctk.CTkFrame):
             wraplength=300, justify="left",
         ).pack(anchor="w", padx=14, pady=(0, 12))
 
-        # Posiciona perto do cursor
         tip.update_idletasks()
-        x = event.x_root + 12
-        y = event.y_root + 12
+        x = event.x_root + 15
+        y = event.y_root + 15
         tip.geometry(f"+{x}+{y}")
         self._tooltip = tip
 
     def _hide_tooltip(self) -> None:
-        tip = getattr(self, "_tooltip", None)
-        if tip and tip.winfo_exists():
-            tip.destroy()
-        self._tooltip = None
+        """Destrói a janela de tooltip ativa."""
+        if self._tooltip is not None:
+            try:
+                if self._tooltip.winfo_exists():
+                    self._tooltip.destroy()
+            except Exception:
+                pass
+            self._tooltip = None
 
     def get_target(self) -> str:
         """Retorna o alvo atual. Usado em testes."""

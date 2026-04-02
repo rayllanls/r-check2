@@ -24,7 +24,8 @@ class GrypeTool(BaseTool):
         cmd = [binary, f"dir:{project_path}", "-o", "json"]
 
         result = subprocess.run(
-            cmd, capture_output=True, text=True, timeout=300
+            cmd, capture_output=True, text=True, timeout=600,
+            creationflags=self.get_creationflags()
         )
         # Grype may exit non-zero based on severity thresholds
 

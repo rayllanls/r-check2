@@ -49,9 +49,12 @@ def clone_repository(
     dest = target_dir or Path(tempfile.mkdtemp(prefix="r-check_"))
 
     try:
+        import platform
+        creationflags = 0x08000000 if platform.system() == "Windows" else 0
         result = subprocess.run(
             ["git", "clone", "--depth", "1", clone_url, str(dest)],
             capture_output=True, text=True, timeout=timeout,
+            creationflags=creationflags,
         )
     except subprocess.TimeoutExpired:
         shutil.rmtree(dest, ignore_errors=True)

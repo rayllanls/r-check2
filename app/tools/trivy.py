@@ -30,7 +30,8 @@ class TrivyTool(BaseTool):
         ]
 
         result = subprocess.run(
-            cmd, capture_output=True, text=True, timeout=300
+            cmd, capture_output=True, text=True, timeout=600,
+            creationflags=self.get_creationflags()
         )
         # Trivy exits non-zero when findings exist — do NOT use check=True
 

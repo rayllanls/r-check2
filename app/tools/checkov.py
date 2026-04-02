@@ -36,7 +36,8 @@ class CheckovTool(BaseTool):
         cmd = [sys.executable, "-m", "checkov", "-d", str(project_path), "--output", "json", "--compact"]
 
         result = subprocess.run(
-            cmd, capture_output=True, text=True, timeout=300
+            cmd, capture_output=True, text=True, timeout=300,
+            creationflags=self.get_creationflags()
         )
         # No check=True — Checkov exits non-zero when findings are found
 

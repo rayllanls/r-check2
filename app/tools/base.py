@@ -15,6 +15,7 @@ class BaseTool(ABC):
 
     def resolve_binary(self) -> str:
         """Prioridade: sys._MEIPASS (PyInstaller frozen) → vendor embutido → PATH do sistema."""
+        import os
         system = "win" if platform.system() == "Windows" else "linux"
         ext = ".exe" if system == "win" else ""
 
@@ -34,17 +35,27 @@ class BaseTool(ABC):
             Path.home() / ".local" / "bin",
             Path("/usr/local/bin"),
         ]
-        system_bin = shutil.which(
-            self.tool_name,
-            path=":".join([str(p) for p in extra_paths] + [shutil.os.environ.get("PATH", "")])
+        
+        # Use os.pathsep (';' on Windows, ':' on Unix)
+        search_path = os.pathsep.join(
+            [str(p) for p in extra_paths if p.exists()] + 
+            [os.environ.get("PATH", "")]
         )
+        
+        system_bin = shutil.which(self.tool_name, path=search_path)
         if system_bin:
             return system_bin
 
         raise FileNotFoundError(
             f"'{self.tool_name}' not found. "
-            f"Install globally or place in vendors/{system}/."
+            f"Instale globalmente ou coloque em vendors/{system}/."
         )
+
+    def get_creationflags(self) -> int:
+        """Return CREATE_NO_WINDOW on Windows to prevent console popup."""
+        if platform.system() == "Windows":
+            return 0x08000000  # subprocess.CREATE_NO_WINDOW
+        return 0
 
     @abstractmethod
     def run(self, project_path: Path) -> list[Finding]:

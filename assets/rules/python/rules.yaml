@@ -1,0 +1,11 @@
+rules:
+- id: python-hardcoded-credentials
+  languages: [python]
+  severity: ERROR
+  message: "Possible hardcoded credentials in Python code."
+  pattern: "$ACCESS_KEY = \"...\""
+- id: python-insecure-subprocess
+  languages: [python]
+  severity: WARNING
+  message: "Insecure use of subprocess with shell=True"
+  pattern: "subprocess.$METHOD(..., shell=True, ...)"

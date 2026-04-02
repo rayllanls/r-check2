@@ -72,11 +72,8 @@ def generate_report(result: ScanResult, open_browser: bool = True) -> Path:
     output.write_text(html, encoding="utf-8")
 
     if open_browser:
-        import sys
-        import os
-        if sys.platform == "win32":
-            os.startfile(str(output))
-        else:
-            webbrowser.open(output.as_uri())
+        # Use absolute URI to handle spaces and special characters in various OSs
+        report_uri = output.resolve().as_uri()
+        webbrowser.open(report_uri)
 
     return output

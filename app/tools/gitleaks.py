@@ -27,7 +27,10 @@ class GitleaksTool(BaseTool):
 
         cmd.extend(["--source", str(project_path)])
 
-        subprocess.run(cmd, capture_output=True, text=True, timeout=300)
+        result = subprocess.run(
+            cmd, capture_output=True, text=True, timeout=300,
+            creationflags=self.get_creationflags()
+        )
         # gitleaks exits 1 when findings exist — do NOT check returncode
 
         try:
