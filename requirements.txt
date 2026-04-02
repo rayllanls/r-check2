@@ -1,0 +1,24 @@
+# GUI
+customtkinter==5.2.2
+pillow>=10.0.0
+
+# Templates e relatório
+jinja2==3.1.4
+
+# HTTP (licença + Groq)
+httpx==0.27.0
+
+# Dados
+pydantic==2.7.0
+python-jose==3.3.0
+
+# Testes
+pytest==8.2.0
+pytest-cov==5.0.0
+
+# Qualidade de código
+ruff==0.4.4
+mypy==1.10.0
+
+# Build
+pyinstaller==6.9.0

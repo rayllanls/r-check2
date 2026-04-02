@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="none">
+  <defs>
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@900&amp;display=swap');
+      .logo-r {
+        font-family: 'Orbitron', system-ui, sans-serif;
+        font-size: 440px;
+        font-weight: 900;
+        fill: #9d00ff;
+      }
+    </style>
+  </defs>
+
+  <!-- Símbolos de Terminal Prominentes ">_" (Vermelho Vivo) -->
+  <g transform="translate(10, 220)">
+    <path d="M0 -60 L60 0 L0 60" stroke="#ef4444" stroke-width="45" stroke-linecap="round" stroke-linejoin="round" />
+    <path d="M90 60 L180 60" stroke="#ef4444" stroke-width="45" stroke-linecap="round" />
+  </g>
+
+  <!-- Letra "R" Cibernética (Roxo Vibrante Sólido) -->
+  <text x="210" y="420" class="logo-r">R</text>
+</svg>

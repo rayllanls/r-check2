@@ -1,0 +1,34 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+env/
+*.egg-info/
+dist/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# r-check — nunca commitar
+.env
+vendors/win/*.exe
+vendors/linux/
+
+# Pastas locais de desenvolvimento
+codigos_para_teste/
+inspiracao/
+license-api/
+rakoon_logo.png
+-
+
+# Claude Code
+.claude/
+
+# Build artifacts
+dist/
+
+# OS
+.DS_Store
+Thumbs.db

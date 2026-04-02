@@ -1,0 +1,24 @@
+[
+  {
+    "RuleID": "generic-api-key",
+    "Secret": "sk_live_1234hardcoded",
+    "File": "config.py",
+    "StartLine": 1,
+    "EndLine": 1,
+    "Match": "STRIPE_KEY = \"sk_live_1234hardcoded\"",
+    "Author": "",
+    "Commit": "",
+    "Date": ""
+  },
+  {
+    "RuleID": "aws-access-key-id",
+    "Secret": "AKIAYVP4CIPPERUVIFXG",
+    "File": ".env",
+    "StartLine": 5,
+    "EndLine": 5,
+    "Match": "AWS_ACCESS_KEY_ID=AKIAYVP4CIPPERUVIFXG",
+    "Author": "",
+    "Commit": "",
+    "Date": ""
+  }
+]

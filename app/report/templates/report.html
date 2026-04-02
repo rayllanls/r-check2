@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>r-check — Relatório de Segurança</title>
+  {% if favicon_b64 %}<link rel="icon" type="image/svg+xml" href="{{ favicon_b64 }}">{% endif %}
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0}
+
+    :root{
+      --bg:#08070a;
+      --surface:#111019;
+      --surface2:#181625;
+      --border:#272436;
+      --border2:#363050;
+      --accent:#2563eb;
+      --accent2:#38bdf8;
+      --green:#2ed573;
+      --red:#ff4757;
+      --purple:#a855f7;
+      --text:#edeaf5;
+      --muted:#7c7990;
+      --dim:#4a4760;
+
+      --crit:#ff4757;--crit-bg:rgba(255,71,87,.1);--crit-bd:rgba(255,71,87,.3);
+      --high:#fb923c;--high-bg:rgba(251,146,60,.1);--high-bd:rgba(251,146,60,.3);
+      --med:#f59e0b;--med-bg:rgba(245,158,11,.08);--med-bd:rgba(245,158,11,.25);
+      --low:#2ed573;--low-bg:rgba(46,213,115,.1);--low-bd:rgba(46,213,115,.3);
+      --info:#7c7990;--info-bg:rgba(124,121,144,.08);--info-bd:rgba(124,121,144,.25);
+    }
+
+    body{
+      font-family:'Inter',system-ui,-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
+      background:var(--bg);
+      color:var(--text);
+      font-size:14px;
+      line-height:1.6;
+      -webkit-font-smoothing:antialiased;
+    }
+
+    ::-webkit-scrollbar{width:5px}
+    ::-webkit-scrollbar-track{background:var(--bg)}
+    ::-webkit-scrollbar-thumb{background:var(--border);border-radius:10px}
+    ::-webkit-scrollbar-thumb:hover{background:var(--border2)}
+
+    .wrap{max-width:1100px;margin:0 auto;padding:32px 24px 56px}
+
+    /* ── Animations ── */
+    @keyframes fadeUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+    .fade-up{animation:fadeUp .45s ease both}
+    .fade-up:nth-child(2){animation-delay:.06s}
+    .fade-up:nth-child(3){animation-delay:.12s}
+    .fade-up:nth-child(4){animation-delay:.18s}
+
+    /* ── Cards ── */
+    .card{
+      background:var(--surface);
+      border:1px solid var(--border);
+      border-radius:14px;
+      margin-bottom:16px;
+      overflow:hidden;
+    }
+
+    /* ── Header ── */
+    .hdr{
+      position:relative;
+      padding:36px 36px 32px;
+      overflow:hidden;
+    }
+    .hdr::before{
+      content:'';
+      position:absolute;
+      inset:0;
+      background:radial-gradient(ellipse 70% 80% at 50% -10%, rgba(37,99,235,.13) 0%, transparent 65%);
+      pointer-events:none;
+    }
+    .hdr-inner{display:flex;align-items:center;gap:24px;position:relative}
+    .hdr-logo{
+      width:52px;height:52px;flex-shrink:0;
+      background:rgba(37,99,235,.1);
+      border:1px solid rgba(37,99,235,.25);
+      border-radius:14px;
+      display:flex;align-items:center;justify-content:center;
+      overflow:hidden;
+    }
+    .hdr-logo img{width:36px;height:36px}
+    .hdr-title{
+      font-size:28px;font-weight:800;
+      letter-spacing:-.03em;line-height:1.1;
+    }
+    .hdr-title .r{color:var(--accent)}
+    .hdr-title .check{color:var(--text)}
+    .hdr-sub{font-size:13px;color:var(--muted);margin-top:6px;line-height:1.6}
+    .hdr-sub strong{color:var(--text);font-weight:600}
+    .hdr-sub .sep{display:inline-block;width:3px;height:3px;border-radius:50%;background:var(--dim);margin:0 8px;vertical-align:middle}
+    .hdr-badge{
+      margin-left:auto;flex-shrink:0;
+      text-align:center;padding:14px 20px;
+      border-radius:12px;
+      background:var(--crit-bg);border:1px solid var(--crit-bd);
+    }
+    .hdr-badge .n{font-size:28px;font-weight:800;color:var(--crit);line-height:1;font-family:'JetBrains Mono','Fira Code','Cascadia Code',ui-monospace,SFMono-Regular,Menlo,monospace}
+    .hdr-badge .l{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-top:4px;font-weight:700}
+
+    /* ── Section label ── */
+    .sec-label{
+      font-size:.68rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;
+      color:var(--accent);display:flex;align-items:center;gap:8px;
+      margin-bottom:12px;padding:0 4px;
+    }
+    .sec-label::before{content:'';width:16px;height:2px;background:var(--accent);border-radius:2px}
+
+    /* ── Stats bar ── */
+    .stats-bar{
+      display:flex;flex-wrap:wrap;gap:0;
+      background:var(--surface);border:1px solid var(--border);
+      border-radius:14px;overflow:hidden;
+      margin-bottom:16px;
+    }
+    .stat-item{
+      flex:1;min-width:100px;padding:20px 12px;
+      text-align:center;border-right:1px solid var(--border);
+      transition:background .2s;
+    }
+    .stat-item:last-child{border-right:none}
+    .stat-item:hover{background:var(--surface2)}
+    .stat-num{display:block;font-size:1.75rem;font-weight:800;letter-spacing:-.02em;font-family:'JetBrains Mono','Fira Code','Cascadia Code',ui-monospace,SFMono-Regular,Menlo,monospace}
+    .stat-lbl{display:block;font-size:.7rem;color:var(--muted);margin-top:4px;font-weight:600;text-transform:uppercase;letter-spacing:.05em}
+    .s-crit{color:var(--crit)}.s-high{color:var(--high)}.s-med{color:var(--med)}.s-low{color:var(--low)}.s-info{color:var(--info)}
+
+    /* ── Chart ── */
+    .chart-wrap{padding:28px 32px;display:flex;align-items:center;gap:36px}
+    .donut-wrap{width:170px;height:170px;flex-shrink:0;position:relative}
+    .donut-wrap svg{width:100%;height:100%;transform:rotate(-90deg)}
+    .donut-center{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;pointer-events:none}
+    .donut-center .cn{font-size:22px;font-weight:800;color:var(--text);font-family:'JetBrains Mono','Fira Code','Cascadia Code',ui-monospace,SFMono-Regular,Menlo,monospace}
+    .donut-center .ct{font-size:9px;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);font-weight:600;margin-top:2px}
+    .legend{flex:1;display:flex;flex-wrap:wrap;gap:8px}
+    .leg-item{
+      display:flex;align-items:center;gap:10px;
+      padding:10px 14px;border-radius:10px;
+      background:var(--surface2);border:1px solid var(--border);
+      flex:1;min-width:130px;transition:border-color .2s;
+    }
+    .leg-item:hover{border-color:var(--border2)}
+    .leg-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+    .leg-lbl{flex:1;color:var(--muted);font-size:12px;font-weight:500}
+    .leg-val{font-weight:700;color:var(--text);font-size:14px;font-family:'JetBrains Mono','Fira Code','Cascadia Code',ui-monospace,SFMono-Regular,Menlo,monospace}
+
+    /* ── Findings section ── */
+    .findings-hdr{
+      padding:16px 24px;font-size:14px;font-weight:600;
+      border-bottom:1px solid var(--border);
+      display:flex;align-items:center;gap:8px;color:var(--text);
+      background:rgba(255,255,255,.01);
+    }
+    .count-badge{
+      background:rgba(37,99,235,.1);color:var(--accent);
+      font-size:11px;font-weight:700;padding:2px 10px;
+      border-radius:100px;border:1px solid rgba(37,99,235,.25);
+      font-family:'JetBrains Mono','Fira Code','Cascadia Code',ui-monospace,SFMono-Regular,Menlo,monospace;
+    }
+
+    /* ── Table ── */
+    table{width:100%;border-collapse:collapse;text-align:left}
+    thead th{
+      padding:10px 20px;font-size:10px;text-transform:uppercase;
+      letter-spacing:.05em;color:var(--muted);font-weight:700;
+      border-bottom:1px solid var(--border);background:var(--surface2);
+    }
+    tbody tr{border-bottom:1px solid var(--border);transition:background .15s}
+    tbody tr:last-child{border-bottom:none}
+    tbody tr:hover{background:rgba(37,99,235,.03)}
+    tbody td{padding:12px 20px;vertical-align:top}
+
+    /* ── Severity badges ── */
+    .sev{
+      display:inline-block;padding:3px 10px;border-radius:100px;
+      font-size:10px;font-weight:700;text-transform:uppercase;
+      letter-spacing:.04em;font-family:'JetBrains Mono','Fira Code','Cascadia Code',ui-monospace,SFMono-Regular,Menlo,monospace;
+    }
+    .sev-c{background:var(--crit-bg);color:var(--crit);border:1px solid var(--crit-bd)}
+    .sev-h{background:var(--high-bg);color:var(--high);border:1px solid var(--high-bd)}
+    .sev-m{background:var(--med-bg);color:var(--med);border:1px solid var(--med-bd)}
+    .sev-l{background:var(--low-bg);color:var(--low);border:1px solid var(--low-bd)}
+    .sev-i{background:var(--info-bg);color:var(--info);border:1px solid var(--info-bd)}
+
+    .f-title{font-weight:600;font-size:13px;color:var(--text)}
+    .f-desc{font-size:11px;color:var(--muted);margin-top:3px;line-height:1.5}
+    .f-file{
+      font-size:11px;color:var(--muted);
+      font-family:'JetBrains Mono','Fira Code','Cascadia Code',ui-monospace,SFMono-Regular,Menlo,monospace;
+      background:rgba(124,121,144,.08);
+      padding:3px 8px;border-radius:6px;
+      display:inline-block;word-break:break-all;
+      border:1px solid var(--border);
+    }
+    .tool-tag{
+      font-size:10px;color:var(--muted);font-weight:700;
+      background:var(--surface2);padding:3px 8px;border-radius:6px;
+      border:1px solid var(--border);display:inline-block;
+      font-family:'JetBrains Mono','Fira Code','Cascadia Code',ui-monospace,SFMono-Regular,Menlo,monospace;
+    }
+
+    /* ── Snippet toggle ── */
+    .snip-btn{
+      cursor:pointer;color:var(--accent);
+      background:rgba(37,99,235,.08);
+      padding:4px 10px;border-radius:6px;
+      font-size:10px;font-weight:700;user-select:none;
+      transition:background .2s;
+      display:inline-flex;align-items:center;gap:4px;
+      border:1px solid rgba(37,99,235,.2);
+    }
+    .snip-btn:hover{background:rgba(37,99,235,.15)}
+    .snip-btn .ar{display:inline-block;transition:transform .2s;font-size:8px}
+    .snip-btn.on .ar{transform:rotate(180deg)}
+    .snip-body{
+      background:#050409;color:var(--muted);
+      font-family:'JetBrains Mono','Fira Code','Cascadia Code',ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11px;
+      border-radius:8px;border:1px solid var(--border);
+      white-space:pre-wrap;word-break:break-all;line-height:1.7;
+      max-height:0;overflow:hidden;
+      transition:max-height .3s ease,padding .3s ease,opacity .2s;
+      opacity:0;padding:0 14px;
+    }
+    .snip-body.on{max-height:260px;overflow-y:auto;opacity:1;padding:14px}
+    .snip-body::-webkit-scrollbar{width:4px}
+    .snip-body::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px}
+
+    /* ── AI blocks ── */
+    .ai-block{
+      margin:4px 0 8px;padding:14px 18px;
+      background:var(--surface2);border-radius:10px;
+      border:1px solid var(--border);
+      border-left:3px solid var(--accent);
+    }
+    .ai-label{
+      display:block;font-size:10px;text-transform:uppercase;
+      letter-spacing:.08em;color:var(--accent);font-weight:700;margin-bottom:6px;
+    }
+    .ai-text{font-size:12px;color:var(--text);line-height:1.7;white-space:pre-wrap;word-break:break-word}
+    .ai-block+.ai-block{margin-top:6px;border-left-color:var(--accent2)}
+    .ai-block+.ai-block .ai-label{color:var(--accent2)}
+
+    /* ── Empty state ── */
+    .empty{padding:56px 20px;text-align:center}
+    .empty-icon{font-size:40px;margin-bottom:14px}
+    .empty h3{font-size:15px;font-weight:700;margin-bottom:4px}
+    .empty p{font-size:13px;color:var(--muted)}
+
+    /* ── Footer ── */
+    .rpt-footer{
+      text-align:center;font-size:11px;color:var(--dim);
+      padding:28px 0 0;margin-top:8px;
+    }
+    .rpt-footer::before{
+      content:'';display:block;width:48px;height:1px;
+      background:var(--border);margin:0 auto 16px;
+    }
+    .rpt-footer strong{color:var(--muted);font-weight:600}
+    .rpt-footer .r{color:var(--purple)}
+    .rpt-footer .sep{display:inline-block;width:3px;height:3px;border-radius:50%;background:var(--dim);margin:0 8px;vertical-align:middle}
+
+    /* ── Responsive ── */
+    @media(max-width:860px){
+      .wrap{padding:16px 12px 32px}
+      .hdr{padding:20px}
+      .hdr-inner{flex-wrap:wrap}
+      .hdr-badge{margin-left:0;width:100%}
+      .stats-bar{flex-wrap:wrap}
+      .stat-item{min-width:calc(50% - 1px)}
+      .chart-wrap{flex-direction:column;padding:20px;gap:20px}
+      .donut-wrap{width:150px;height:150px;margin:0 auto}
+      .legend{justify-content:center}
+      table{display:block;overflow-x:auto}
+    }
+    @media(max-width:520px){
+      .stat-item{min-width:calc(50% - 1px)}
+      tbody td,thead th{padding:10px 12px}
+    }
+  </style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- Header -->
+  <div class="card hdr fade-up">
+    <div class="hdr-inner">
+      {% if favicon_b64 %}
+      <div class="hdr-logo">
+        <img src="{{ favicon_b64 }}" alt="r-check">
+      </div>
+      {% endif %}
+      <div>
+        <div class="hdr-title"><span class="r">r-</span><span class="check">check</span> &nbsp;Relatório de Segurança</div>
+        <div class="hdr-sub">
+          Projeto: <strong>{{ result.project_path }}</strong>
+          <span class="sep"></span>
+          {{ generated_at }}
+          <span class="sep"></span>
+          {{ result.scanned_files }} arquivos analisados
+        </div>
+      </div>
+      <div class="hdr-badge">
+        <div class="n">{{ result.findings | length }}</div>
+        <div class="l">Findings</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Stats bar -->
+  {% set low_count  = result.findings | selectattr("severity", "equalto", "low")  | list | length %}
+  {% set info_count = result.findings | selectattr("severity", "equalto", "info") | list | length %}
+  <div class="stats-bar fade-up">
+    <div class="stat-item"><span class="stat-num s-crit">{{ result.critical_count }}</span><span class="stat-lbl">Critical</span></div>
+    <div class="stat-item"><span class="stat-num s-high">{{ result.high_count }}</span><span class="stat-lbl">High</span></div>
+    <div class="stat-item"><span class="stat-num s-med">{{ result.medium_count }}</span><span class="stat-lbl">Medium</span></div>
+    <div class="stat-item"><span class="stat-num s-low">{{ low_count }}</span><span class="stat-lbl">Low</span></div>
+    <div class="stat-item"><span class="stat-num s-info">{{ info_count }}</span><span class="stat-lbl">Info</span></div>
+  </div>
+
+  <!-- Chart -->
+  <div class="card fade-up">
+    <div class="chart-wrap">
+      <div class="donut-wrap">
+        <svg viewBox="0 0 200 200" id="chart"></svg>
+        <div class="donut-center">
+          <div class="cn">{{ result.findings | length }}</div>
+          <div class="ct">Total</div>
+        </div>
+      </div>
+      <div class="legend">
+        <div class="leg-item"><span class="leg-dot" style="background:var(--crit)"></span><span class="leg-lbl">Critical</span><span class="leg-val">{{ result.critical_count }}</span></div>
+        <div class="leg-item"><span class="leg-dot" style="background:var(--high)"></span><span class="leg-lbl">High</span><span class="leg-val">{{ result.high_count }}</span></div>
+        <div class="leg-item"><span class="leg-dot" style="background:var(--med)"></span><span class="leg-lbl">Medium</span><span class="leg-val">{{ result.medium_count }}</span></div>
+        <div class="leg-item"><span class="leg-dot" style="background:var(--low)"></span><span class="leg-lbl">Low</span><span class="leg-val">{{ low_count }}</span></div>
+        <div class="leg-item"><span class="leg-dot" style="background:var(--info)"></span><span class="leg-lbl">Info</span><span class="leg-val">{{ info_count }}</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Findings -->
+  <div class="card fade-up">
+    <div class="findings-hdr">
+      Findings <span class="count-badge">{{ result.findings | length }}</span>
+    </div>
+    {% if result.findings | length > 0 %}
+    <table>
+      <thead><tr>
+        <th style="width:110px">Severidade</th>
+        <th>Título</th>
+        <th style="width:100px">Ferramenta</th>
+        <th style="width:210px">Arquivo:Linha</th>
+        <th style="width:80px;text-align:center">Snippet</th>
+      </tr></thead>
+      <tbody>
+        {% for f in result.findings | sort(attribute="severity") %}
+        <tr>
+          <td><span class="sev sev-{{ f.severity.value[0] }}">{{ f.severity.value }}</span></td>
+          <td>
+            <div class="f-title">{{ f.title }}</div>
+            {% if f.description %}<div class="f-desc">{{ f.description[:160] }}{% if f.description|length > 160 %}…{% endif %}</div>{% endif %}
+          </td>
+          <td>
+            {% for t in f.tool %}<span class="tool-tag" title="{{ f.tool_notes.get(t, '') | truncate(120) }}">{{ t }}</span>{% if not loop.last %} {% endif %}{% endfor %}
+          </td>
+          <td><span class="f-file">{{ f.file_path }}:{{ f.line_number }}</span></td>
+          <td style="text-align:center">
+            {% if f.snippet %}
+            <span class="snip-btn" onclick="ts('sp-{{ loop.index }}',this)"><span class="ar">▼</span>Ver</span>
+            {% else %}
+            <span style="color:var(--dim);font-size:11px">—</span>
+            {% endif %}
+          </td>
+        </tr>
+        {% if f.snippet %}
+        <tr style="border-bottom:none;background:transparent">
+          <td colspan="5" style="padding:0 20px 10px">
+            <pre class="snip-body" id="sp-{{ loop.index }}">{{ f.snippet | e }}</pre>
+          </td>
+        </tr>
+        {% endif %}
+        {% if f.ai_explanation or f.ai_fix_suggestion %}
+        <tr style="border-bottom:none;background:transparent">
+          <td colspan="5" style="padding:0 20px 14px">
+            {% if f.ai_explanation %}
+            <div class="ai-block">
+              <span class="ai-label">Explicacao IA</span>
+              <p class="ai-text">{{ f.ai_explanation }}</p>
+            </div>
+            {% endif %}
+            {% if f.ai_fix_suggestion %}
+            <div class="ai-block">
+              <span class="ai-label">Sugestao de Correcao</span>
+              <p class="ai-text">{{ f.ai_fix_suggestion }}</p>
+            </div>
+            {% endif %}
+          </td>
+        </tr>
+        {% endif %}
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <div class="empty">
+      <div class="empty-icon">✅</div>
+      <h3>Nenhuma vulnerabilidade encontrada</h3>
+      <p>O projeto passou em todas as verificações.</p>
+    </div>
+    {% endif %}
+  </div>
+
+  <div class="rpt-footer">
+    <a href="https://rayllan.com.br/r-check" style="color:var(--muted);text-decoration:none;font-weight:600" onmouseover="this.style.color='var(--text)'" onmouseout="this.style.color='var(--muted)'">
+      <span class="r">r-</span><span style="color:var(--text)">check</span>
+    </a>
+    <span class="sep"></span>
+    {{ generated_at }}
+    <span class="sep"></span>
+    <a href="https://rayllan.com.br/r-check" style="color:var(--dim);text-decoration:none" onmouseover="this.style.color='var(--muted)'" onmouseout="this.style.color='var(--dim)'">rayllan.com.br/r-check</a>
+  </div>
+
+</div>
+<script>
+(function(){
+  var d=[
+    {v:{{ result.critical_count }},c:'#ff4757'},
+    {v:{{ result.high_count }},c:'#fb923c'},
+    {v:{{ result.medium_count }},c:'#f59e0b'},
+    {v:{{ low_count }},c:'#2ed573'},
+    {v:{{ info_count }},c:'#7c7990'}
+  ],svg=document.getElementById('chart');
+  if(!svg)return;
+  var total=0,i;
+  for(i=0;i<d.length;i++)total+=d[i].v;
+  if(!total)return;
+  var r=74,sw=22,cx=100,cy=100,circ=2*Math.PI*r,off=0,gap=.014;
+  for(i=0;i<d.length;i++){
+    if(!d[i].v)continue;
+    var frac=d[i].v/total,dash=Math.max(0,frac*circ-gap*circ),el=document.createElementNS('http://www.w3.org/2000/svg','circle');
+    el.setAttribute('cx',cx);el.setAttribute('cy',cy);el.setAttribute('r',r);
+    el.setAttribute('fill','none');el.setAttribute('stroke',d[i].c);el.setAttribute('stroke-width',sw);
+    el.setAttribute('stroke-dasharray',dash+' '+(circ-dash));el.setAttribute('stroke-dashoffset',-off);
+    el.setAttribute('stroke-linecap','round');svg.appendChild(el);
+    off+=frac*circ;
+  }
+})();
+function ts(id,btn){var el=document.getElementById(id);if(!el)return;var o=el.classList.toggle('on');if(btn)btn.classList.toggle('on',o)}
+</script>
+</body>
+</html>

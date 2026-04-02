@@ -1,0 +1,46 @@
+{
+  "matches": [
+    {
+      "vulnerability": {
+        "id": "CVE-2023-30861",
+        "severity": "High",
+        "description": "Flask session cookie allows remote code execution",
+        "fix": {"state": "fixed", "versions": ["2.3.2"]}
+      },
+      "artifact": {
+        "name": "flask",
+        "version": "2.0.0",
+        "type": "python",
+        "locations": [{"path": "requirements.txt"}]
+      }
+    },
+    {
+      "vulnerability": {
+        "id": "CVE-2022-42969",
+        "severity": "Critical",
+        "description": "py library ReDoS vulnerability",
+        "fix": {"state": "not-fixed", "versions": []}
+      },
+      "artifact": {
+        "name": "py",
+        "version": "1.11.0",
+        "type": "python",
+        "locations": [{"path": "requirements.txt"}]
+      }
+    },
+    {
+      "vulnerability": {
+        "id": "CVE-2024-12345",
+        "severity": "Negligible",
+        "description": "Minor info leak in debug mode",
+        "fix": {"state": "fixed", "versions": ["3.0.1"]}
+      },
+      "artifact": {
+        "name": "debuglib",
+        "version": "1.0.0",
+        "type": "python",
+        "locations": [{"path": "requirements.txt"}]
+      }
+    }
+  ]
+}

@@ -1,0 +1,135 @@
+name: Build & Release — r-check
+
+# Dispara ao criar tag de versão: git tag v1.0.0 && git push --tags
+on:
+  push:
+    tags: ['v*']
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+
+    steps:
+      # ── 1. Checkout ────────────────────────────────────────────────────────
+      - uses: actions/checkout@v4
+
+      # ── 2. Python ─────────────────────────────────────────────────────────
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+
+      # ── 3. Dependências Python ────────────────────────────────────────────
+      - name: Install Python dependencies
+        shell: bash
+        run: |
+          pip install --upgrade pip
+          pip install -r requirements.txt pyinstaller==6.9.0
+
+      # ── 4. Download scanner binaries para vendors/win/ ────────────────────
+      #       gitleaks, trivy, grype, trufflehog  →  release .zip/.tar do GitHub
+      #       semgrep                             →  pip (já instalado acima)
+      #       checkov                             →  pip (já instalado acima)
+      - name: Download scanner binaries
+        shell: pwsh
+        run: |
+          $dest = "vendors\win"
+          New-Item -ItemType Directory -Force -Path $dest | Out-Null
+
+          # ─── gitleaks v8.30.1 ────────────────────────────────────────────
+          $ver = "8.30.1"
+          $url = "https://github.com/gitleaks/gitleaks/releases/download/v${ver}/gitleaks_${ver}_windows_x64.zip"
+          Invoke-WebRequest $url -OutFile "$dest\gitleaks.zip"
+          Expand-Archive "$dest\gitleaks.zip" -DestinationPath "$dest\gitleaks_tmp" -Force
+          Move-Item "$dest\gitleaks_tmp\gitleaks.exe" "$dest\gitleaks.exe" -Force
+          Remove-Item "$dest\gitleaks.zip","$dest\gitleaks_tmp" -Recurse -Force
+
+          # ─── trivy v0.69.3 ───────────────────────────────────────────────
+          $ver = "0.69.3"
+          $url = "https://github.com/aquasecurity/trivy/releases/download/v${ver}/trivy_${ver}_windows-64bit.zip"
+          Invoke-WebRequest $url -OutFile "$dest\trivy.zip"
+          Expand-Archive "$dest\trivy.zip" -DestinationPath "$dest\trivy_tmp" -Force
+          Move-Item "$dest\trivy_tmp\trivy.exe" "$dest\trivy.exe" -Force
+          Remove-Item "$dest\trivy.zip","$dest\trivy_tmp" -Recurse -Force
+
+          # ─── grype v0.110.0 ──────────────────────────────────────────────
+          $ver = "0.110.0"
+          $url = "https://github.com/anchore/grype/releases/download/v${ver}/grype_${ver}_windows_amd64.zip"
+          Invoke-WebRequest $url -OutFile "$dest\grype.zip"
+          Expand-Archive "$dest\grype.zip" -DestinationPath "$dest\grype_tmp" -Force
+          Move-Item "$dest\grype_tmp\grype.exe" "$dest\grype.exe" -Force
+          Remove-Item "$dest\grype.zip","$dest\grype_tmp" -Recurse -Force
+
+          # ─── trufflehog v3.94.2 ──────────────────────────────────────────
+          $ver = "3.94.2"
+          $url = "https://github.com/trufflesecurity/trufflehog/releases/download/v${ver}/trufflehog_${ver}_windows_amd64.tar.gz"
+          Invoke-WebRequest $url -OutFile "$dest\trufflehog.tar.gz"
+          tar -xzf "$dest\trufflehog.tar.gz" -C "$dest"
+          Remove-Item "$dest\trufflehog.tar.gz" -Force
+
+          # ─── semgrep 1.157.0 (pip — invocado via sys.executable -m semgrep) ─
+          pip install "semgrep==1.157.0"
+
+          # ─── checkov 3.2.513 (pip — invocado via sys.executable -m checkov) ─
+          pip install "checkov==3.2.513"
+
+          Write-Host "Binarios em $dest"
+          Get-ChildItem $dest
+
+      # ── 5. Build PyInstaller ──────────────────────────────────────────────
+      - name: Build executable
+        shell: bash
+        run: |
+          pyinstaller build/r-check_win.spec --noconfirm
+
+      # ── 6. Listar artefato gerado ─────────────────────────────────────────
+      - name: List dist
+        shell: bash
+        run: ls -lh dist/r-check/
+
+      # ── 7. Zipar dist/r-check/ ────────────────────────────────────────────
+      - name: Zip dist
+        shell: pwsh
+        run: |
+          Compress-Archive -Path "dist\r-check\*" -DestinationPath "dist\r-check-windows.zip"
+
+      # ── 8. Upload artefato ────────────────────────────────────────────────
+      - uses: actions/upload-artifact@v4
+        with:
+          name: r-check-windows
+          path: dist/r-check-windows.zip
+
+  # ── Release no GitHub ───────────────────────────────────────────────────────
+  release:
+    needs: build-windows
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: r-check-windows
+          path: artifacts/
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: "r-check ${{ github.ref_name }}"
+          body: |
+            ## r-check ${{ github.ref_name }}
+
+            ### Download
+            - **Windows**: extraia `r-check-windows.zip` e execute `r-check.exe`
+
+            ### Scanners incluídos
+            gitleaks · trivy · grype · trufflehog · semgrep · checkov
+
+            ### Changelog
+            _Adicione notas aqui antes de criar a tag._
+          files: artifacts/r-check-windows.zip
+          draft: false
+          prerelease: ${{ contains(github.ref_name, '-beta') || contains(github.ref_name, '-rc') }}

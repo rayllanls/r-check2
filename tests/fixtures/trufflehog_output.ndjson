@@ -1,0 +1,2 @@
+{"SourceMetadata":{"Data":{"Filesystem":{"file":"config/secrets.py","line":7}}},"SourceName":"trufflehog - filesystem","DetectorName":"AWS","Verified":true,"Raw":"AKIAYVP4CIPPERUVIFXG","Redacted":"AKIAxxxxxxxxxxxxxxxxxxxG","ExtraData":{"account":"123456789"}}
+{"SourceMetadata":{"Data":{"Filesystem":{"file":".env","line":2}}},"SourceName":"trufflehog - filesystem","DetectorName":"Stripe","Verified":false,"Raw":"sk_live_abc123def456","Redacted":"sk_live_xxxxxxxxxxxxx","ExtraData":{}}

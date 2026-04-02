@@ -1,0 +1,82 @@
+{
+  "SchemaVersion": 2,
+  "ArtifactName": "/path/to/project",
+  "ArtifactType": "filesystem",
+  "Results": [
+    {
+      "Target": "requirements.txt",
+      "Class": "lang-pkgs",
+      "Type": "pip",
+      "Vulnerabilities": [
+        {
+          "VulnerabilityID": "CVE-2023-30861",
+          "PkgName": "flask",
+          "InstalledVersion": "2.0.0",
+          "FixedVersion": "2.3.2",
+          "Severity": "HIGH",
+          "Title": "Flask vulnerable to possible disclosure of permanent session cookie",
+          "Description": "Flask is a lightweight WSGI web application framework. When all of the following conditions are met, a response containing data intended for one client may be cached and subsequently sent by the proxy to other clients."
+        }
+      ]
+    },
+    {
+      "Target": "Dockerfile",
+      "Class": "config",
+      "Type": "dockerfile",
+      "Misconfigurations": [
+        {
+          "Type": "Dockerfile Security Check",
+          "ID": "DS-0002",
+          "AVDID": "AVD-DS-0002",
+          "Title": "Image user should not be root",
+          "Description": "Running containers with 'root' user can lead to a container escape situation.",
+          "Message": "Specify at least 1 USER command in Dockerfile with non-root user as argument",
+          "Resolution": "Add a USER command to the Dockerfile",
+          "Severity": "HIGH",
+          "Status": "FAIL",
+          "CauseMetadata": {
+            "StartLine": 5,
+            "EndLine": 5,
+            "Code": {
+              "Lines": []
+            }
+          }
+        },
+        {
+          "Type": "Dockerfile Security Check",
+          "ID": "DS-0026",
+          "AVDID": "AVD-DS-0026",
+          "Title": "No healthcheck defined",
+          "Description": "You should add a HEALTHCHECK instruction to the Docker image to ensure that health checks are executed against the running container.",
+          "Message": "Add a HEALTHCHECK instruction to the Docker image",
+          "Resolution": "Add a HEALTHCHECK instruction to the Dockerfile",
+          "Severity": "LOW",
+          "Status": "PASS",
+          "CauseMetadata": {
+            "StartLine": 0,
+            "EndLine": 0,
+            "Code": {
+              "Lines": []
+            }
+          }
+        }
+      ]
+    },
+    {
+      "Target": "config.py",
+      "Class": "secret",
+      "Type": "",
+      "Secrets": [
+        {
+          "RuleID": "aws-access-key-id",
+          "Category": "AWS",
+          "Severity": "CRITICAL",
+          "Title": "AWS Access Key ID",
+          "StartLine": 3,
+          "EndLine": 3,
+          "Match": "AKIAIOSFODNN7EXAMPLE"
+        }
+      ]
+    }
+  ]
+}

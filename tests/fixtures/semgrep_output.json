@@ -1,0 +1,38 @@
+{
+  "results": [
+    {
+      "check_id": "python.lang.security.audit.formatted-sql-query.formatted-sql-query",
+      "path": "app/db.py",
+      "start": {"line": 42, "col": 4, "offset": 1204},
+      "end": {"line": 42, "col": 58, "offset": 1258},
+      "extra": {
+        "message": "Detected use of f-string formatting in SQL query. This could lead to SQL injection.",
+        "severity": "ERROR",
+        "lines": "    cursor.execute(f\"SELECT * FROM users WHERE id={uid}\")"
+      }
+    },
+    {
+      "check_id": "python.lang.security.audit.eval-detected.eval-detected",
+      "path": "app/utils.py",
+      "start": {"line": 15, "col": 8, "offset": 310},
+      "end": {"line": 15, "col": 30, "offset": 332},
+      "extra": {
+        "message": "Detected the use of eval(). This can execute arbitrary code.",
+        "severity": "WARNING",
+        "lines": "        eval(user_input)"
+      }
+    },
+    {
+      "check_id": "python.lang.best-practice.open-never-closed.open-never-closed",
+      "path": "app/files.py",
+      "start": {"line": 3, "col": 0, "offset": 20},
+      "end": {"line": 3, "col": 25, "offset": 45},
+      "extra": {
+        "message": "File is opened but never closed. Use a with statement.",
+        "severity": "INFO",
+        "lines": "f = open('data.txt', 'r')"
+      }
+    }
+  ],
+  "errors": []
+}
