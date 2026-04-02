@@ -68,6 +68,13 @@ hidden_imports = [
     "app.gui.widgets",
     "app.report",
     "app.tools",
+    "app.tools.base",
+    "app.tools.semgrep",
+    "app.tools.trufflehog",
+    "app.tools.grype",
+    "app.tools.gitleaks",
+    "app.tools.trivy",
+    "app.tools.checkov",
     "app.license",
     # Tkinter
     "tkinter",
