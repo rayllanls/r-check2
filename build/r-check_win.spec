@@ -120,7 +120,7 @@ exe = EXE(
     target_arch=None,
     codesign_identity=None,
     entitlements_file=None,
-    icon=None,          # TODO: adicionar r-check.ico na Fase 8
+    icon=str(ROOT / "app" / "icon.ico"),
 )
 
 coll = COLLECT(
